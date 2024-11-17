@@ -1,4 +1,4 @@
-Investigation into optimizing matrix multiplication
+Investigation into optimizing matrix multiplication (because https://github.com/OpenMathLib/OpenBLAS/tree/develop/kernel/x86_64 is really hard to read)
 
 Benchmarks:
 C basic matmul: ~1.4 GFLOP/s
