@@ -18,7 +18,7 @@ Openblas: 1000+ GFLOP/s
 
 System information:
 ```
-            .-/+oossssoo+/-.               aaron@centml-ubuntu-05 
+            .-/+oossssoo+/-.               aaron@ubuntu
         `:+ssssssssssssssssss+:`           ---------------------- 
       -+ssssssssssssssssssyyssss+-         OS: Ubuntu 22.04.5 LTS x86_64 
     .ossssssssssssssssssdMMMNysssso.       Host: Z690 AERO G -CF 
