@@ -32,9 +32,8 @@ int main(){
     
     uint64_t end = nanos();
 
-    printf("Time: %fs\n", (end - start)*1e-9);
-    // calculate flops
+    // printf("Time: %fs\n", (end - start)*1e-9);
     double gflops = (double)flops / (double)((end - start) * 1e-9);
-    printf("GFLOPS: %f\n", gflops);
+    printf("%f GFLOP/S \n", gflops);
     return 0;
 }

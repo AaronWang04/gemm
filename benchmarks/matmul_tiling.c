@@ -22,17 +22,19 @@ int main(){
 
     double flops = 2.0 * N * N * N * 1e-9;
 
-    for (int bi = 0; bi < N; bi += BLOCK_SIZE){
-        for (int bj = 0; bj < N; bj += BLOCK_SIZE){
-            for (int bk = 0; bk < N; bk += BLOCK_SIZE){
-                for (int i = bi; i < bi + BLOCK_SIZE; i++){
-                    for (int j = bj; j < bj + BLOCK_SIZE; j++){
-                        for (int k = bk; k < bk + BLOCK_SIZE; k++){
-                            C[i][j] += A[i][k] * B[k][j];
+    for (int bx = 0; bx < N; bx += BLOCK_SIZE){
+        for (int by = 0; by < N; by += BLOCK_SIZE){
+
+                for (int x = bx; x < bx + BLOCK_SIZE; x++){
+                    for (int y = by; y < by + BLOCK_SIZE; y++){
+                        float acc = 0;
+                        for (int k = 0; k < N; k++){
+                            acc += A[x][k] * B[k][y];
                         }
+                        C[x][y] = acc;
                     }
                 }
-            }
+
         }
     }
     uint64_t end = nanos();
