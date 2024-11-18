@@ -19,9 +19,10 @@ uint64_t nanos(){
 }
 
 // initialize matrices, they have to be aligned to take advantage of SIMD datatypes
-float A[N*N] __attribute__ ((aligned (64)));;
-float B[N*N] __attribute__ ((aligned (64)));;
-float C[N*N] __attribute__ ((aligned (64)));;
+// aligned to 32 bytes, which is the size of a SIMD register
+float A[N*N] __attribute__ ((aligned (32)));;
+float B[N*N] __attribute__ ((aligned (32)));;
+float C[N*N] __attribute__ ((aligned (32)));;
 
 // __m256 is a datatype that holds 8 single precision floats
 // called a multiple accumulator register
