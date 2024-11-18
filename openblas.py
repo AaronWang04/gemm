@@ -1,11 +1,12 @@
+import os
+# use only 1 thread
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+# make sure the import is done after the environment variable is set
 import numpy as np
 import time
 
-import os
-# use only 1 thread
-os.environ['OMP_NUM_THREADS'] = '1'
-
-N = 4096
+N = 1024
 if __name__ == "__main__":
     FLOP = 2*N*N*N
     A = np.random.randn(N, N).astype(np.float32)

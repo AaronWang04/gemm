@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #define N 1024
-#define BLOCK_SIZE 32
+#define BLOCK_SIZE 8
 
 float A[N][N];
 float B[N][N];
