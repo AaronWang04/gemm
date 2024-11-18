@@ -2,3 +2,4 @@ venv/*
 *.out
 .git/*
 __pycache__/*
+.vscode/*
