@@ -1,5 +1,5 @@
 // clang -O3 -march=native matmul_simd.c && ./a.out
-
+// probably wrong right now, it is getting 600 flops...
 // enable gnu extensions
 #define _GNU_SOURCE
 
