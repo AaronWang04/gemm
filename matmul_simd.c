@@ -1,6 +1,6 @@
 // clang -O3 -std=c11 -march=native matmul_simd.c && ./a.out
-// gcc -O4  -mavx matmul_simd.c && ./a.out
-// around 30 flops right now, can be optimized a lot more. openblas is around 160 flops
+// gcc -std=c11 -march=native -mavx2 -mfma matmul_simd.c && ./a.out
+// around 34 flops right now, can be optimized a lot more. openblas is around 160 flops
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -24,7 +24,7 @@ float B[N][N];
 float BT[N][N];
 float C[N][N];
 
-float verify[N][N];
+float verify[N][N] __attribute__((aligned(32)));
 
 void print_float(float* values) {
     printf("float [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",
@@ -48,11 +48,14 @@ int main(){
         printf("Error opening file!\n");
         return -1;
     }
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-result"
     fread(A, 1, sizeof(float)*N*N, f);
     fread(B, 1, sizeof(float)*N*N, f);
     fread(BT, 1, sizeof(float)*N*N, f);
     fread(verify, 1, sizeof(float)*N*N, f);
     fclose(f);
+    #pragma GCC diagnostic pop
 
     uint64_t start = nanos();
     double flops = 2.0 * N * N * N * 1e-9;
@@ -66,17 +69,10 @@ int main(){
             __m256 c_vec = _mm256_setzero_ps();
             for (int k = 0; k < N; k += 8) {
                 a_vec = _mm256_loadu_ps(&A[i][k]);
-
-                float temp[8];
                 b_vec = _mm256_loadu_ps(&BT[j][k]);
-                // for(int l = 0; l < 8; l++){
-                //     printf("%.2f ", b_vec[l]);
-                // }
-                // printf("\n");
-
                 c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
             }
-            float temp[8];
+            float temp[8] __attribute__((aligned(32)));
             // store contents of SIMD register into memory
             _mm256_storeu_ps(temp, c_vec);
             C[i][j] = temp[0] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7];
