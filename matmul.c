@@ -1,4 +1,4 @@
-// clang -O3 -march=native matmul.c && ./a.out
+// clang -O3 matmul.c && ./a.out
 // ~5.8 GFLOP/s
 #include <stdio.h>
 #include <math.h>
@@ -6,7 +6,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 128
+#define N 1024
 
 float A[N][N];
 float B[N][N];

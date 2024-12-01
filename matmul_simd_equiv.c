@@ -1,6 +1,6 @@
+// debug purpose
 // clang -O3 -std=c11 matmul_simd_equiv.c && ./a.out
 // gcc -O4  -mavx matmul_simd.c && ./a.out
-// around 30 flops right now, can be optimized a lot more. openblas is around 160 flops
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -11,7 +11,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 128
+#define N 1024
 
 uint64_t nanos(){
     struct timespec t;
@@ -21,6 +21,7 @@ uint64_t nanos(){
 
 float A[N][N];
 float B[N][N];
+float BT[N][N];
 float C[N][N];
 
 float verify[N][N];
@@ -48,9 +49,9 @@ int main(){
     }
     fread(A, 1, sizeof(float)*N*N, f);
     fread(B, 1, sizeof(float)*N*N, f);
+    fread(BT, 1, sizeof(float)*N*N, f);
     fread(verify, 1, sizeof(float)*N*N, f);
     fclose(f);
-
 
     uint64_t start = nanos();
     double flops = 2.0 * N * N * N * 1e-9;
@@ -60,21 +61,15 @@ int main(){
         for(int j = 0; j < N; j++){
             float acc[8] = {0, 0, 0, 0, 0, 0, 0, 0};
             for (int k = 0; k < N; k += 8) {
-                for(int l = 0; l < 8; l++){printf("%.2f ", A[i][k+l]);}
-                printf("\n\n");
-                for(int l = 0; l < 8; l++){printf("%.2f ", B[k+l][j]);}
-                printf("\n\n");
-
                 for(int l = 0; l < 8; l++){
                     acc[l] += A[i][k+l] * B[k+l][j];
-                    printf("%.2f ", acc[l]);
+                    printf("%.2f ", B[k+l][j]);
                 }
-                printf("\n\n");
+                printf("\n");
             }
-
+            exit(0);
             // store contents of SIMD register into memory
             C[i][j] = acc[0] + acc[1] + acc[2] + acc[3] + acc[4] + acc[5] + acc[6] + acc[7];
-            exit(0);
         }
     }
 

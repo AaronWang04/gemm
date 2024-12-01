@@ -7,14 +7,13 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy as np
 import time
 
-N = 128
+N = 1024
 if __name__ == "__main__":
     FLOP = 2*N*N*N
     A = np.random.randn(N, N).astype(np.float32)
     B = np.random.randn(N, N).astype(np.float32)
 
-
-    for _ in range(10):
+    for _ in range(2):
         start = time.monotonic()
         C = A @ B
         end = time.monotonic()
@@ -23,8 +22,13 @@ if __name__ == "__main__":
         GFLOPS = FLOPS*1e-9
         print(f"GFLOP/S: {GFLOPS}")
 
-    # store A, B and result for verification
+    BT = B.transpose().copy()
+
+    # np.savetxt('matrix.csv', B, delimiter=',', fmt='%.2f')
+
+    # # store A, B and result for verification
     with open("/tmp/gemm", "wb") as f:
         f.write(A.data)
         f.write(B.data)
+        f.write(BT.data)
         f.write(C.data)

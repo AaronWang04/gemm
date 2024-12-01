@@ -11,7 +11,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 128
+#define N 1024
 
 uint64_t nanos(){
     struct timespec t;
@@ -21,6 +21,7 @@ uint64_t nanos(){
 
 float A[N][N];
 float B[N][N];
+float BT[N][N];
 float C[N][N];
 
 float verify[N][N];
@@ -49,9 +50,9 @@ int main(){
     }
     fread(A, 1, sizeof(float)*N*N, f);
     fread(B, 1, sizeof(float)*N*N, f);
+    fread(BT, 1, sizeof(float)*N*N, f);
     fread(verify, 1, sizeof(float)*N*N, f);
     fclose(f);
-
 
     uint64_t start = nanos();
     double flops = 2.0 * N * N * N * 1e-9;
@@ -64,39 +65,21 @@ int main(){
             __m256 b_vec;
             __m256 c_vec = _mm256_setzero_ps();
             for (int k = 0; k < N; k += 8) {
+                a_vec = _mm256_loadu_ps(&A[i][k]);
 
                 float temp[8];
+                b_vec = _mm256_loadu_ps(&BT[j][k]);
+                // for(int l = 0; l < 8; l++){
+                //     printf("%.2f ", b_vec[l]);
+                // }
+                // printf("\n");
 
-                // load content from array into SIMD registers
-                a_vec = _mm256_loadu_ps(&A[i][k]);
-                _mm256_storeu_ps(temp, a_vec);
-                for(int l = 0; l < 8; l++){
-                    printf("%.2f ", temp[l]);
-                }
-                printf("\n\n");
-                b_vec = _mm256_loadu_ps(&B[k][j]);
-                _mm256_storeu_ps(temp, b_vec);
-                for(int l = 0; l < 8; l++){
-                    printf("%.2f ", temp[l]);
-                }
-                printf("\n\n");
-                // c_vec += a_vec * b_vec
                 c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
-
-                _mm256_storeu_ps(temp, c_vec);
-                for(int l = 0; l < 8; l++){
-                    printf("%.2f ", temp[l]);
-                }
-                printf("\n\n");
-
             }
-
-            float temp[8] __attribute__((aligned(32)));
+            float temp[8];
             // store contents of SIMD register into memory
             _mm256_storeu_ps(temp, c_vec);
-
             C[i][j] = temp[0] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7];
-            exit(0);
         }
     }
 
