@@ -1,6 +1,7 @@
 // clang -O3 -march=native matmul.c && ./a.out
 // ~5.8 GFLOP/s
 #include <stdio.h>
+#include <math.h>
 #include <stdint.h>
 #include <time.h>
 #include <assert.h>
@@ -11,6 +12,8 @@ float A[N][N];
 float B[N][N];
 float C[N][N];
 
+float verify[N][N];
+
 uint64_t nanos(){
     struct timespec t;
     clock_gettime(CLOCK_MONOTONIC_RAW, &t);
@@ -18,6 +21,18 @@ uint64_t nanos(){
 }
 
 int main(){
+
+    FILE *f = fopen("/tmp/gemm", "rb");
+    if (f == NULL) {
+        printf("Error opening file!\n");
+        return -1;
+    }
+    fread(A, 1, sizeof(float)*N*N, f);
+    fread(B, 1, sizeof(float)*N*N, f);
+    fread(verify, 1, sizeof(float)*N*N, f);
+    fclose(f);
+
+
     uint64_t start = nanos();
 
     double flops = 2.0 * N * N * N * 1e-9;
@@ -37,5 +52,14 @@ int main(){
     // printf("Time: %fs\n", (end - start)*1e-9);
     double gflops = (double)flops / (double)((end - start) * 1e-9);
     printf("%f GFLOP/S \n", gflops);
+
+    for (int k = 0; k < N*N; k++) {
+        if (fabsf(C[0][k]- verify[0][k]) > 1e-3) {
+            printf("Verification failed\n");
+            return 1;
+        }
+    }
+    printf("Verfication successful\n");
+
     return 0;
 }

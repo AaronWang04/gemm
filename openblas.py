@@ -1,3 +1,4 @@
+# python openblas.py
 import os
 # use only 1 thread
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -12,9 +13,6 @@ if __name__ == "__main__":
     A = np.random.randn(N, N).astype(np.float32)
     B = np.random.randn(N, N).astype(np.float32)
 
-    # Warm-up
-    for _ in range(5):
-        _ = A @ B
 
     for _ in range(10):
         start = time.monotonic()
@@ -24,3 +22,9 @@ if __name__ == "__main__":
         FLOPS = FLOP/exec_time
         GFLOPS = FLOPS*1e-9
         print(f"GFLOP/S: {GFLOPS}")
+
+    # store A, B and result for verification
+    with open("/tmp/gemm", "wb") as f:
+        f.write(A.data)
+        f.write(B.data)
+        f.write(C.data)
