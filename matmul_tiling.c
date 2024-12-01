@@ -1,3 +1,5 @@
+// clang -O3 matmul_tiling.c && ./a.out
+// ~5.8 GFLOP/s
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>

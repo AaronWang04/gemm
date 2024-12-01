@@ -1,6 +1,5 @@
 // clang -O3 -march=native matmul_simd.c && ./a.out
-// probably wrong right now, it is getting 600 flops...
-// enable gnu extensions
+// around 30 flops right now, can be optimized a lot more. openblas is around 160 flops
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -10,7 +9,6 @@
 #include <assert.h>
 
 #define N 1024
-#define BLOCK_SIZE 8 // not for tiling, but for SIMD
 
 uint64_t nanos(){
     struct timespec t;
@@ -20,56 +18,42 @@ uint64_t nanos(){
 
 // initialize matrices, they have to be aligned to take advantage of SIMD datatypes
 // aligned to 32 bytes, which is the size of a SIMD register
-float A[N*N] __attribute__ ((aligned (32)));;
-float B[N*N] __attribute__ ((aligned (32)));;
-float C[N*N] __attribute__ ((aligned (32)));;
+float A[N][N] __attribute__ ((aligned (32)));;
+float B[N][N] __attribute__ ((aligned (32)));;
+float C[N][N] __attribute__ ((aligned (32)));;
 
 // __m256 is a datatype that holds 8 single precision floats
 // called a multiple accumulator register
-__m256 *Am = (__m256*)A;
-__m256 *Bm = (__m256*)B;
-__m256 *Cm = (__m256*)C;
+// __m256 *Am = (__m256*)A;
+// __m256 *Bm = (__m256*)B;
+// __m256 *Cm = (__m256*)C;
 
 int main(){
 
-    assert (N % BLOCK_SIZE == 0);
+    assert (N % 8 == 0);
 
     uint64_t start = nanos();
 
     double flops = 2.0 * N * N * N * 1e-9;
 
-    for(int by = 0; by < N; by += BLOCK_SIZE){
-        for(int bx = 0; bx < N; bx += BLOCK_SIZE){
-            __m256 tc[BLOCK_SIZE] = {};
-            for(int y = 0; y < BLOCK_SIZE; y++){
-                __m256 tmp;
-                for(int k = 0; k < BLOCK_SIZE; k++){
-                    tmp = _mm256_fmadd_ps(
-                        Am[((by+y)*N+k)/8],
-                        Bm[(bx*N+k)/8],
-                        tmp
-                    );
-                }
-                tc[y] = tmp;
+    // note that SIMD instructions act on 8 floats at a time
+    for(int i = 0; i < N; i++){
+        for(int j = 0; j < N; j++){
+            __m256 c_vec[8] = {};
+            for (int k = 0; k < N; k += 8) {
+                __m256 a_vec = _mm256_loadu_ps(&A[i][k]);
+                __m256 b_vec = _mm256_loadu_ps(&B[k][j]);
+                c_vec[0] = _mm256_fmadd_ps(a_vec, b_vec, c_vec[0]);
             }
 
-            for(int y = 0; y < BLOCK_SIZE; y++){
-                Cm[(by+y)*N/8 + bx/8] = tc[y];
-            }
+            float temp[8];
+            _mm256_storeu_ps(temp, c_vec[0]);
+            C[i][j] = temp[0] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7];
         }
     }
 
-    for(int x = 0; x < N; x++){
-        for(int y = 0; y < N; y++){
-            C[x*N + y] = Cm[x][y];
-        }
-    }
-    
     uint64_t end = nanos();
-
-    // printf("Time: %fs\n", (end - start)*1e-9);
     double gflops = (double)flops / (double)((end - start) * 1e-9);
-    printf("%f GFLOP/S \n", gflops);
+    printf("GFLOPS: %f\n", gflops);
     return 0;
-
 }
