@@ -6,7 +6,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 1024
+#define N 128
 
 float A[N][N];
 float B[N][N];

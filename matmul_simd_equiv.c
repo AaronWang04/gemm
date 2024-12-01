@@ -1,4 +1,4 @@
-// clang -O3 -std=c11 -march=native matmul_simd.c && ./a.out
+// clang -O3 -std=c11 matmul_simd_equiv.c && ./a.out
 // gcc -O4  -mavx matmul_simd.c && ./a.out
 // around 30 flops right now, can be optimized a lot more. openblas is around 160 flops
 #define _GNU_SOURCE
@@ -41,7 +41,6 @@ void print_m256(__m256 reg) {
 int main(){
     
     assert (N % 8 == 0);
-
     FILE *f = fopen("/tmp/gemm", "rb");
     if (f == NULL) {
         printf("Error opening file!\n");
@@ -59,43 +58,22 @@ int main(){
     // note that SIMD instructions act on 8 floats at a time
     for(int i = 0; i < N; i++){
         for(int j = 0; j < N; j++){
-            // Initialize a SIMD register to zero
-            __m256 a_vec;
-            __m256 b_vec;
-            __m256 c_vec = _mm256_setzero_ps();
+            float acc[8] = {0, 0, 0, 0, 0, 0, 0, 0};
             for (int k = 0; k < N; k += 8) {
-
-                float temp[8];
-
-                // load content from array into SIMD registers
-                a_vec = _mm256_loadu_ps(&A[i][k]);
-                _mm256_storeu_ps(temp, a_vec);
-                for(int l = 0; l < 8; l++){
-                    printf("%.2f ", temp[l]);
-                }
+                for(int l = 0; l < 8; l++){printf("%.2f ", A[i][k+l]);}
                 printf("\n\n");
-                b_vec = _mm256_loadu_ps(&B[k][j]);
-                _mm256_storeu_ps(temp, b_vec);
-                for(int l = 0; l < 8; l++){
-                    printf("%.2f ", temp[l]);
-                }
-                printf("\n\n");
-                // c_vec += a_vec * b_vec
-                c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
-
-                _mm256_storeu_ps(temp, c_vec);
-                for(int l = 0; l < 8; l++){
-                    printf("%.2f ", temp[l]);
-                }
+                for(int l = 0; l < 8; l++){printf("%.2f ", B[k+l][j]);}
                 printf("\n\n");
 
+                for(int l = 0; l < 8; l++){
+                    acc[l] += A[i][k+l] * B[k+l][j];
+                    printf("%.2f ", acc[l]);
+                }
+                printf("\n\n");
             }
 
-            float temp[8] __attribute__((aligned(32)));
             // store contents of SIMD register into memory
-            _mm256_storeu_ps(temp, c_vec);
-
-            C[i][j] = temp[0] + temp[1] + temp[2] + temp[3] + temp[4] + temp[5] + temp[6] + temp[7];
+            C[i][j] = acc[0] + acc[1] + acc[2] + acc[3] + acc[4] + acc[5] + acc[6] + acc[7];
             exit(0);
         }
     }

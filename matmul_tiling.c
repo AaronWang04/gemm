@@ -49,11 +49,9 @@ int main(){
                             acc += A[x][k] * B[k][y];
                         }
                         C[x][y] = acc;
-                        printf("C[%d][%d] = %f\n", x, y, C[x][y]);
                     }
                     
                 }
-                exit(1);
         }
     }
     uint64_t end = nanos();

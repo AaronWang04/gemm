@@ -7,7 +7,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy as np
 import time
 
-N = 1024
+N = 128
 if __name__ == "__main__":
     FLOP = 2*N*N*N
     A = np.random.randn(N, N).astype(np.float32)
