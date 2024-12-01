@@ -52,13 +52,22 @@ int main(){
     #pragma GCC diagnostic ignored "-Wunused-result"
     fread(A, 1, sizeof(float)*N*N, f);
     fread(B, 1, sizeof(float)*N*N, f);
-    fread(BT, 1, sizeof(float)*N*N, f);
     fread(verify, 1, sizeof(float)*N*N, f);
     fclose(f);
     #pragma GCC diagnostic pop
 
-    uint64_t start = nanos();
+
     double flops = 2.0 * N * N * N * 1e-9;
+    uint64_t start = nanos();
+
+    // swizzling for transpose
+    for (int i = 0; i < N; i+=8) {
+        for (int j = 0; j < N; j++) {
+            for (int l = 0; l < 8; l++) {
+                BT[i + l][j] = B[j][i + l];
+            }
+        }
+    }
 
     // note that SIMD instructions act on 8 floats at a time
     for(int i = 0; i < N; i++){

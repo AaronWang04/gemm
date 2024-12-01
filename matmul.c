@@ -32,7 +32,6 @@ int main(){
     fread(verify, 1, sizeof(float)*N*N, f);
     fclose(f);
 
-
     uint64_t start = nanos();
 
     double flops = 2.0 * N * N * N * 1e-9;

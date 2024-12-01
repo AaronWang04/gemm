@@ -22,13 +22,10 @@ if __name__ == "__main__":
         GFLOPS = FLOPS*1e-9
         print(f"GFLOP/S: {GFLOPS}")
 
-    BT = B.transpose().copy()
-
     # np.savetxt('matrix.csv', B, delimiter=',', fmt='%.2f')
 
     # # store A, B and result for verification
     with open("/tmp/gemm", "wb") as f:
         f.write(A.data)
         f.write(B.data)
-        f.write(BT.data)
         f.write(C.data)
