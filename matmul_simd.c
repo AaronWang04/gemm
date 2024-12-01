@@ -22,12 +22,6 @@ float A[N][N] __attribute__ ((aligned (32)));;
 float B[N][N] __attribute__ ((aligned (32)));;
 float C[N][N] __attribute__ ((aligned (32)));;
 
-// __m256 is a datatype that holds 8 single precision floats
-// called a multiple accumulator register
-// __m256 *Am = (__m256*)A;
-// __m256 *Bm = (__m256*)B;
-// __m256 *Cm = (__m256*)C;
-
 int main(){
 
     assert (N % 8 == 0);
