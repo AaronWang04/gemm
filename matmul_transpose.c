@@ -1,21 +1,17 @@
-// clang -O3 matmul_tiling.c && ./a.out
-// ~6 GFLOP/s with transpose, ~1 GFLOP/s without transpose
-// Tiling has no effect on performance
+// clang -O3 matmul_transpose.c && ./a.out
+// ~6 GFLOP/s
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
 #include <time.h>
 #include <assert.h>
 
 #define N 1024
-#define BLOCK_SIZE 8
 
 float A[N][N];
 float B[N][N];
 float BT[N][N];
 float C[N][N];
-
 float verify[N][N];
 
 uint64_t nanos(){
@@ -25,7 +21,6 @@ uint64_t nanos(){
 }
 
 int main(){
-    assert (N % BLOCK_SIZE == 0);
 
     FILE *f = fopen("/tmp/gemm", "rb");
     if (f == NULL) {
@@ -39,7 +34,6 @@ int main(){
 
     double flops = 2.0 * N * N * N * 1e-9;
     uint64_t start = nanos();
-
     for (int i = 0; i < N; i+=8) {
         for (int j = 0; j < N; j++) {
             for (int l = 0; l < 8; l++) {
@@ -48,26 +42,22 @@ int main(){
         }
     }
 
-    for (int bx = 0; bx < N; bx += BLOCK_SIZE){
-        for (int by = 0; by < N; by += BLOCK_SIZE){
-
-                for (int x = bx; x < bx + BLOCK_SIZE; x++){
-                    for (int y = by; y < by + BLOCK_SIZE; y++){
-                        float acc = 0;
-                        for (int k = 0; k < N; k++){
-                            acc += A[x][k] * BT[y][k];
-                        }
-                        C[x][y] = acc;
-                    }
-                }
+    // perform matrix multplication
+    for(int x = 0; x < N; x++){
+        for(int y = 0; y < N; y++){
+            float acc = 0;
+            for(int z = 0; z < N; z++){
+                acc += A[x][z] * BT[y][z];
+            }
+            C[x][y] = acc;
         }
     }
+    
     uint64_t end = nanos();
 
-    printf("Time: %fs\n", (end - start)*1e-9);
-    // calculate flops
+    // printf("Time: %fs\n", (end - start)*1e-9);
     double gflops = (double)flops / (double)((end - start) * 1e-9);
-    printf("GFLOPS: %f\n", gflops);
+    printf("%f GFLOP/S \n", gflops);
 
     for (int k = 0; k < N*N; k++) {
         if (fabsf(C[0][k]- verify[0][k]) > 1e-3) {

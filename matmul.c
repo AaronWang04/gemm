@@ -1,5 +1,5 @@
 // clang -O3 matmul.c && ./a.out
-// ~5.8 GFLOP/s
+// ~1 GFLOP/s
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
@@ -32,9 +32,10 @@ int main(){
     fread(verify, 1, sizeof(float)*N*N, f);
     fclose(f);
 
-    uint64_t start = nanos();
 
     double flops = 2.0 * N * N * N * 1e-9;
+    uint64_t start = nanos();
+
     // perform matrix multplication
     for(int x = 0; x < N; x++){
         for(int y = 0; y < N; y++){
