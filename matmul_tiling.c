@@ -1,6 +1,5 @@
 // clang -O3 matmul_tiling.c && ./a.out
 // ~6 GFLOP/s with transpose, ~1 GFLOP/s without transpose
-// Tiling has no effect on performance
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -12,6 +11,7 @@
 #define BLOCK_SIZE 8
 
 float A[N][N];
+float AT[N][N];
 float B[N][N];
 float BT[N][N];
 float C[N][N];
@@ -44,24 +44,58 @@ int main(){
         for (int j = 0; j < N; j++) {
             for (int l = 0; l < 8; l++) {
                 BT[i + l][j] = B[j][i + l];
+                AT[i + l][j] = A[j][i + l];
             }
         }
     }
 
+    // ~36 GFLOP/s
+
+    // around 36 gflops on block size 8, slower on any other block size
     for (int bx = 0; bx < N; bx += BLOCK_SIZE){
         for (int by = 0; by < N; by += BLOCK_SIZE){
 
+            for (int k = 0; k < N; k++){
                 for (int x = bx; x < bx + BLOCK_SIZE; x++){
                     for (int y = by; y < by + BLOCK_SIZE; y++){
-                        float acc = 0;
-                        for (int k = 0; k < N; k++){
-                            acc += A[x][k] * BT[y][k];
-                        }
-                        C[x][y] = acc;
+                        C[x][y] += A[x][k] * BT[y][k];
                     }
                 }
+            }
+
         }
     }
+
+    // around 30 gflops on block size 128, slower on any other block size
+    // for (int bx = 0; bx < N; bx += BLOCK_SIZE){
+    //     for (int by = 0; by < N; by += BLOCK_SIZE){
+
+    //         for (int k = 0; k < N; k++){
+    //             for (int x = bx; x < bx + BLOCK_SIZE; x++){
+    //                 for (int y = by; y < by + BLOCK_SIZE; y++){
+    //                     C[x][y] += AT[k][x] * B[k][y];
+    //                 }
+    //             }
+    //         }
+
+    //     }
+    // }
+
+    // ~6 GFLOP/s im not sure why this way doesnt work at all
+    // for (int bx = 0; bx < N; bx += BLOCK_SIZE){
+    //     for (int by = 0; by < N; by += BLOCK_SIZE){
+
+    //         for (int x = bx; x < bx + BLOCK_SIZE; x++){
+    //             for (int y = by; y < by + BLOCK_SIZE; y++){
+    //                 for (int k = 0; k < N; k++){
+    //                     C[x][y] += A[x][k] * BT[y][k];
+    //                 }
+    //             }
+    //         }
+
+    //     }
+    // }
+
     uint64_t end = nanos();
 
     printf("Time: %fs\n", (end - start)*1e-9);

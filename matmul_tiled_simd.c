@@ -54,13 +54,12 @@ int main(){
         }
     }
 
-    #define BLOCK 8
-    #define BLOCK_Y 4
-    #define BLOCK_X 2
-    for(int by = 0; by < N; by += BLOCK_Y){
-        for(int bx = 0; bx < N; bx += BLOCK*BLOCK_X){
+    for(int by = 0; by < N; by += BLOCK_SIZE){
+        for(int bx = 0; bx < N; bx += BLOCK_SIZE){
             
-            
+            for (int k = 0; k < N; k++){
+                
+            }
 
         }
     }
