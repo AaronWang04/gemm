@@ -10,10 +10,8 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 1024
-#define BLOCK 64
-#define BLOCK_Y 4
-#define BLOCK_X 2
+#define N 32
+#define BLOCK_SIZE 8
 
 uint64_t nanos(){
     struct timespec t;
@@ -56,12 +54,13 @@ int main(){
         }
     }
 
+    #define BLOCK 8
+    #define BLOCK_Y 4
+    #define BLOCK_X 2
     for(int by = 0; by < N; by += BLOCK_Y){
         for(int bx = 0; bx < N; bx += BLOCK*BLOCK_X){
-
-            for(int k = 0; k < N; k++){
-                
-            }
+            
+            
 
         }
     }

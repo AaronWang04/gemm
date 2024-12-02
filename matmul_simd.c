@@ -1,6 +1,8 @@
 // clang -O3 -std=c11 -march=native matmul_simd.c && ./a.out
 // gcc -std=c11 -march=native -mavx2 -mfma matmul_simd.c && ./a.out
-// around 34 flops, a lot better than 5 flops without SIMD, but far from openblas's 160 flops
+// around 34 flops, a lot better than 6 flops without SIMD, but far from openblas's 160 flops
+// you can't use SIMD without transpose unless you do some weird indexing when loading
+
 #define _GNU_SOURCE
 
 #include <stdio.h>
