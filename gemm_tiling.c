@@ -1,5 +1,5 @@
-// clang -O3 matmul_tiling.c && ./a.out
-// ~6 GFLOP/s with transpose, ~1 GFLOP/s without transpose
+// clang -O2 gemm_tiling.c && ./a.out
+// gflops are complicated... gonna investigate
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -48,8 +48,6 @@ int main(){
             }
         }
     }
-
-    // ~36 GFLOP/s
 
     // around 36 gflops on block size 8, slower on any other block size
     for (int bx = 0; bx < N; bx += BLOCK_SIZE){

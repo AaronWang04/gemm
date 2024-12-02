@@ -1,21 +1,29 @@
 Investigation into optimizing matrix multiplication
-- (because https://github.com/OpenMathLib/OpenBLAS/tree/develop/kernel/x86_64 is really hard to read)
+- ( https://github.com/OpenMathLib/OpenBLAS/tree/develop/kernel/x86_64 is really hard to read)
 
 Benchmarks:
+- gemm_basic : basic implementation in c
+  - around 1 gflops
+- gemm_transpose : transpose matrix B
+  - reduce cache misses by traversing B through row-majored fashion
+  - around 6 gflops
+- gemm_tiling
+  - reduce cache misses even further through blocked tiling
+  - maxes out at around 36 gflops, good block sizes matter a lot here
+  - the moment you start using ram the gflops plummet, you want everything to fit on registers
+- gemm_simd
+  - uses avx SIMD instructions to parallize the computation
+  - note that gemm_tiling and gemm_transpose already have some SIMD instructions on data moving from compiler optimization
+  - around 34 flops
+- gemm_tiled_simd
+  - todo
+- openblas
+  - 160 gflops on one thread on my cpu
+  - 1000 gflops on multithreaded
 
-C basic matmul: ~1.4 GFLOP/s
-- With -O2 optimization: ~5.6 GFLOP/s
-
-C matmul with basic tiling: ~1.4 GFLOP/s
-- I thought efficient caching would have more of an effect but I guess not
-
-Openblas 1-thread (numpy): ~160 GFLOP/s
-
-Openblas: 1000+ GFLOP/s
-- performance is sometimes inconsistent and dependent on size of matrix, I did not bother trying to adjust power management settings to get consistent results
-- will do more benchmarking if needed
-
-
+Notes
+- use ```objdump -d a.out``` to look at generated assembly
+- make sure to set OPENBLAS_NUM_THREADS=1 so that numpy doesn't use all the threads
 
 System information:
 ```

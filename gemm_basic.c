@@ -1,5 +1,5 @@
-// clang -O3 matmul_transpose.c && ./a.out
-// ~6 GFLOP/s
+// clang -O3 gemm_basic.c && ./a.out
+// ~1 GFLOP/s
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
@@ -10,8 +10,8 @@
 
 float A[N][N];
 float B[N][N];
-float BT[N][N];
 float C[N][N];
+
 float verify[N][N];
 
 uint64_t nanos(){
@@ -32,22 +32,16 @@ int main(){
     fread(verify, 1, sizeof(float)*N*N, f);
     fclose(f);
 
+
     double flops = 2.0 * N * N * N * 1e-9;
     uint64_t start = nanos();
-    for (int i = 0; i < N; i+=8) {
-        for (int j = 0; j < N; j++) {
-            for (int l = 0; l < 8; l++) {
-                BT[i + l][j] = B[j][i + l];
-            }
-        }
-    }
 
     // perform matrix multplication
     for(int x = 0; x < N; x++){
         for(int y = 0; y < N; y++){
             float acc = 0;
             for(int z = 0; z < N; z++){
-                acc += A[x][z] * BT[y][z];
+                acc += A[x][z] * B[z][y];
             }
             C[x][y] = acc;
         }
