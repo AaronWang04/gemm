@@ -1,4 +1,4 @@
-// clang -O3 -std=c11 -march=native matmul_tiled_simd.c && ./a.out
+// clang -O3 -std=c11 -march=native gemm_tiled_simd.c && ./a.out
 
 #define _GNU_SOURCE
 
@@ -10,7 +10,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 32
+#define N 128
 #define BLOCK_SIZE 8
 
 uint64_t nanos(){
@@ -19,7 +19,22 @@ uint64_t nanos(){
     return (uint64_t)t.tv_sec * 1000000000 + (uint64_t)t.tv_nsec;
 }
 
+
+void print_float(float* values) {
+    printf("float [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",
+           values[0], values[1], values[2], values[3],
+           values[4], values[5], values[6], values[7]);
+}
+
+void print_m256(__m256 reg) {
+    float* values = (float*)&reg;
+    printf("[%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",
+           values[0], values[1], values[2], values[3],
+           values[4], values[5], values[6], values[7]);
+}
+
 float A[N][N];
+float AT[N][N];
 float B[N][N];
 float BT[N][N];
 float C[N][N];
@@ -50,17 +65,28 @@ int main(){
         for (int j = 0; j < N; j++) {
             for (int l = 0; l < 8; l++) {
                 BT[i + l][j] = B[j][i + l];
+                AT[i + l][j] = A[j][i + l];
             }
         }
     }
-
-    for(int by = 0; by < N; by += BLOCK_SIZE){
-        for(int bx = 0; bx < N; bx += BLOCK_SIZE){
-            
+    __m256 a_vec;
+    __m256 b_vec;
+    __m256 c_vec;
+    for (int bx = 0; bx < N; bx += BLOCK_SIZE){
+        for (int by = 0; by < N; by += BLOCK_SIZE){
             for (int k = 0; k < N; k++){
-                
+                for (int x = bx; x < bx + BLOCK_SIZE; x++){
+                    a_vec = _mm256_broadcast_ss(&AT[k][x]);
+                    b_vec = _mm256_loadu_ps(&B[k][by]);
+                    c_vec = _mm256_setzero_ps();
+                    c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
+                    float temp[8] __attribute__((aligned(32)));
+                    _mm256_storeu_ps(temp, c_vec);
+                    for(int i = 0; i < 8; i++){
+                        C[x][by+i] += temp[i];
+                    }
+                }
             }
-
         }
     }
 
