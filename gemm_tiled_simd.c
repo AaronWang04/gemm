@@ -1,4 +1,4 @@
-// clang -O3 -std=c11 -march=native gemm_tiled_simd.c && ./a.out
+// clang -O3 -march=native -ffast-math gemm_tiled_simd.c && ./a.out
 
 #define _GNU_SOURCE
 
@@ -12,6 +12,7 @@
 
 #define N 1024
 #define BLOCK_SIZE 8
+#define REGISTER_SIZE 8
 
 uint64_t nanos(){
     struct timespec t;
@@ -81,10 +82,9 @@ int main(){
             }
 
             for (int k = 0; k < N; k++){
-                c_vec = _mm256_setzero_ps();
+                b_vec = _mm256_loadu_ps(&B[k][by]);
                 for (int x = bx; x < bx + BLOCK_SIZE; x++){
                     a_vec = _mm256_broadcast_ss(&AT[k][x]);
-                    b_vec = _mm256_loadu_ps(&B[k][by]);
                     vec_arr[x-bx] = _mm256_fmadd_ps(a_vec, b_vec, vec_arr[x-bx]);
                 }
             }
