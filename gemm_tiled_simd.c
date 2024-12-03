@@ -10,7 +10,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 128
+#define N 1024
 #define BLOCK_SIZE 8
 
 uint64_t nanos(){
@@ -74,19 +74,29 @@ int main(){
     __m256 c_vec;
     for (int bx = 0; bx < N; bx += BLOCK_SIZE){
         for (int by = 0; by < N; by += BLOCK_SIZE){
+
+            __m256 vec_arr[BLOCK_SIZE];
+            for(int i = 0; i < BLOCK_SIZE; i++){
+                vec_arr[i] = _mm256_setzero_ps();
+            }
+
             for (int k = 0; k < N; k++){
+                c_vec = _mm256_setzero_ps();
                 for (int x = bx; x < bx + BLOCK_SIZE; x++){
                     a_vec = _mm256_broadcast_ss(&AT[k][x]);
                     b_vec = _mm256_loadu_ps(&B[k][by]);
-                    c_vec = _mm256_setzero_ps();
-                    c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
-                    float temp[8] __attribute__((aligned(32)));
-                    _mm256_storeu_ps(temp, c_vec);
-                    for(int i = 0; i < 8; i++){
-                        C[x][by+i] += temp[i];
-                    }
+                    vec_arr[x-bx] = _mm256_fmadd_ps(a_vec, b_vec, vec_arr[x-bx]);
                 }
             }
+
+            float temp[8] __attribute__((aligned(32)));
+            for(int i = 0; i < BLOCK_SIZE; i++){
+                _mm256_storeu_ps(temp, vec_arr[i]);
+                for(int j = 0; j < BLOCK_SIZE; j++){
+                    C[bx+i][by+j] = temp[j];
+                }
+            }
+
         }
     }
 
