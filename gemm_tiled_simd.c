@@ -1,5 +1,5 @@
 // clang -O3 -march=native -ffast-math gemm_tiled_simd.c && ./a.out
-
+// same speed as regular gemm_simd, not sure how to achieve cache coherency, need to mess around?
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -72,7 +72,6 @@ int main(){
     }
     __m256 a_vec;
     __m256 b_vec;
-    __m256 c_vec;
     for (int bx = 0; bx < N; bx += BLOCK_SIZE){
         for (int by = 0; by < N; by += BLOCK_SIZE){
 
@@ -89,12 +88,8 @@ int main(){
                 }
             }
 
-            float temp[8] __attribute__((aligned(32)));
             for(int i = 0; i < BLOCK_SIZE; i++){
-                _mm256_storeu_ps(temp, vec_arr[i]);
-                for(int j = 0; j < BLOCK_SIZE; j++){
-                    C[bx+i][by+j] = temp[j];
-                }
+                _mm256_storeu_ps(&C[bx+i][by], vec_arr[i]);
             }
 
         }

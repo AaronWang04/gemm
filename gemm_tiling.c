@@ -1,4 +1,4 @@
-// clang -O2 gemm_tiling.c && ./a.out
+// clang -O3 -ffast-math gemm_tiling.c && ./a.out
 // gflops are complicated... gonna investigate
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +7,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 128
+#define N 1024
 #define BLOCK_SIZE 8
 
 float A[N][N];
@@ -50,44 +50,36 @@ int main(){
     }
 
     // around 36 gflops on block size 8, slower on any other block size
-    // for (int bx = 0; bx < N; bx += BLOCK_SIZE){
-    //     for (int by = 0; by < N; by += BLOCK_SIZE){
-
-    //         for (int k = 0; k < N; k++){
-    //             for (int x = bx; x < bx + BLOCK_SIZE; x++){
-    //                 for (int y = by; y < by + BLOCK_SIZE; y++){
-    //                     C[x][y] += A[x][k] * BT[y][k];
-    //                     // printf("%f, ", A[x][k] * BT[y][k]);
-    //                     // printf("%f, ", BT[y][k]);
-    //                     printf("%d %d, ", y, k);
-    //                 }
-    //                 printf("\n");
-    //             }
-    //             exit(1);
-    //         }
-
-    //     }
-    // }
-
-    // around 30 gflops on block size 128, slower on any other block size
     for (int bx = 0; bx < N; bx += BLOCK_SIZE){
         for (int by = 0; by < N; by += BLOCK_SIZE){
 
             for (int k = 0; k < N; k++){
                 for (int x = bx; x < bx + BLOCK_SIZE; x++){
                     for (int y = by; y < by + BLOCK_SIZE; y++){
-                        C[x][y] += AT[k][x] * B[k][y];
-                        printf("%f, ", AT[k][x]);
+                        C[x][y] += A[x][k] * BT[y][k];
                     }
-                    printf("\n");
                 }
-                exit(1);
             }
 
         }
     }
 
-    // ~6 GFLOP/s im not sure why this way doesnt work at all regardless of block size
+    // around 30 gflops on block size 128, slower on any other block size
+    // for (int bx = 0; bx < N; bx += BLOCK_SIZE){
+    //     for (int by = 0; by < N; by += BLOCK_SIZE){
+
+    //         for (int k = 0; k < N; k++){
+    //             for (int x = bx; x < bx + BLOCK_SIZE; x++){
+    //                 for (int y = by; y < by + BLOCK_SIZE; y++){
+    //                     C[x][y] += AT[k][x] * B[k][y];
+    //                 }
+    //             }
+    //         }
+
+    //     }
+    // }
+
+    // ~6 GFLOP/s im not sure why this way doesnt work at all
     // for (int bx = 0; bx < N; bx += BLOCK_SIZE){
     //     for (int by = 0; by < N; by += BLOCK_SIZE){
 
@@ -104,7 +96,6 @@ int main(){
 
     uint64_t end = nanos();
 
-    printf("Time: %fs\n", (end - start)*1e-9);
     // calculate flops
     double gflops = (double)flops / (double)((end - start) * 1e-9);
     printf("GFLOPS: %f\n", gflops);
