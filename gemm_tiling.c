@@ -1,4 +1,4 @@
-// clang -O3 -ffast-math gemm_tiling.c && ./a.out
+// clang -O3 gemm_tiling.c && ./a.out
 // gflops are complicated... gonna investigate
 #include <stdio.h>
 #include <stdlib.h>

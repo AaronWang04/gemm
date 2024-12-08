@@ -12,7 +12,6 @@
 
 #define N 1024
 #define BLOCK_SIZE 8
-#define REGISTER_SIZE 8
 
 uint64_t nanos(){
     struct timespec t;
@@ -40,6 +39,22 @@ float B[N][N];
 float BT[N][N];
 float C[N][N];
 float verify[N][N];
+
+__m256 *Am = (__m256*)A;
+__m256 *Bm = (__m256*)B;
+__m256 *Cm = (__m256*)C;
+
+
+void matmul(){
+    
+    for(int by = 0; by < N; by += BLOCK_SIZE){
+        for(int bx = 0; bx < N; bx += BLOCK_SIZE){
+            
+        }
+    }
+
+}
+
 
 int main(){
     
