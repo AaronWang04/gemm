@@ -24,6 +24,8 @@ Benchmarks:
 Notes
 - use ```objdump -d a.out``` to look at generated assembly
 - make sure to set OPENBLAS_NUM_THREADS=1 so that numpy doesn't use all the threads
+- valgrind can also be used to check cache hits
+  - ```valgrind --tool=cachegrind ./a.out```
 
 System information:
 ```

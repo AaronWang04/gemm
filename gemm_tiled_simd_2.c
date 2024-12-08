@@ -11,7 +11,8 @@
 #include <assert.h>
 
 #define N 1024
-#define BLOCK_SIZE 8
+#define BLOCK_Y 8
+#define BLOCK_X 8
 
 uint64_t nanos(){
     struct timespec t;
@@ -33,32 +34,50 @@ void print_m256(__m256 reg) {
            values[4], values[5], values[6], values[7]);
 }
 
-float A[N][N];
-float AT[N][N];
-float B[N][N];
-float BT[N][N];
-float C[N][N];
-float verify[N][N];
+// TODO: check if alignment helps with cache hits
+float A[N*N] __attribute__((aligned(32)));
+float AT[N*N] __attribute__((aligned(32)));
+float B[N*N] __attribute__((aligned(32)));
+float BT[N*N] __attribute__((aligned(32)));
+float C[N*N] __attribute__((aligned(32)));
+float verify[N*N] __attribute__((aligned(32)));
 
 __m256 *Am = (__m256*)A;
-__m256 *Bm = (__m256*)B;
+__m256 *Bm = (__m256*)BT;
 __m256 *Cm = (__m256*)C;
 
-
 void matmul(){
-    
-    for(int by = 0; by < N; by += BLOCK_SIZE){
-        for(int bx = 0; bx < N; bx += BLOCK_SIZE){
-            
+
+    for(int by = 0; by < N; by += BLOCK_Y){
+        for(int bx = 0; bx < N; bx += BLOCK_X){
+
+            // compute
+            __m256 tc[BLOCK_Y][BLOCK_X] = {};
+            for(int k = 0; k < N; k+= 8){
+                for(int y = 0; y < BLOCK_Y; y++){
+                    __m256 ty = Am[((by+y)*N + k)/ 8];
+                    for(int x = 0; x < BLOCK_X; x++){
+                        tc[y][x] = _mm256_fmadd_ps(ty, Bm[((bx+x)*N + k)/ 8], tc[y][x]);
+                    }
+                }
+            }
+
+            // store
+            for(int y = 0; y < BLOCK_Y; y++){
+                for(int x = 0; x < BLOCK_X; x++){
+                    float ftmp = 0.0;
+                    for(int i = 0; i < 8; i++) ftmp += tc[y][x][i];
+                    C[(by+y)*N + bx+x] = ftmp;
+                }
+            }
+
+
         }
     }
 
 }
 
-
 int main(){
-    
-    assert (N % 8 == 0);
 
     FILE *f = fopen("/tmp/gemm", "rb");
     if (f == NULL) {
@@ -76,28 +95,27 @@ int main(){
     double flops = 2.0 * N * N * N * 1e-9;
     uint64_t start = nanos();
 
-    // swizzling for transpose
     for (int i = 0; i < N; i+=8) {
         for (int j = 0; j < N; j++) {
             for (int l = 0; l < 8; l++) {
-                BT[i + l][j] = B[j][i + l];
-                AT[i + l][j] = A[j][i + l];
+                BT[(i+l)*N+j] = B[j*N + (i+l)];
+                AT[(i+l)*N+j] = A[j*N + (i+l)];
             }
         }
     }
 
+    matmul();
 
     uint64_t end = nanos();
     double gflops = (double)flops / (double)((end - start) * 1e-9);
     printf("GFLOP/s: %f\n", gflops);
 
     for (int k = 0; k < N*N; k++) {
-        if (fabsf(C[0][k]- verify[0][k]) > 1e-3) {
+        if (fabsf(C[k]- verify[k]) > 1e-3) {
             printf("Verification failed\n");
             return 1;
         }
     }
     printf("Verfication successful\n");
 
-    return 0;
 }
