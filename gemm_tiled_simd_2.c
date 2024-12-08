@@ -11,8 +11,8 @@
 #include <assert.h>
 
 #define N 1024
-#define BLOCK_Y 8
-#define BLOCK_X 8
+#define BLOCK_Y 4
+#define BLOCK_X 2
 
 uint64_t nanos(){
     struct timespec t;
