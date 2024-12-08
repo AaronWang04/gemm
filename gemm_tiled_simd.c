@@ -1,5 +1,7 @@
 // clang -O3 -march=native -ffast-math gemm_tiled_simd.c && ./a.out
-// same speed as regular gemm_simd, not sure how to achieve cache coherency, need to mess around?
+// block y and x is needed to achieve good register hits, cannot just use one block size
+// 100 gflops
+
 #define _GNU_SOURCE
 
 #include <stdio.h>
@@ -11,8 +13,8 @@
 #include <assert.h>
 
 #define N 1024
-#define BLOCK_SIZE 8
-#define REGISTER_SIZE 8
+#define BLOCK_Y 4
+#define BLOCK_X 2
 
 uint64_t nanos(){
     struct timespec t;
@@ -34,12 +36,14 @@ void print_m256(__m256 reg) {
            values[4], values[5], values[6], values[7]);
 }
 
-float A[N][N];
-float AT[N][N];
-float B[N][N];
-float BT[N][N];
-float C[N][N];
-float verify[N][N];
+
+// if not aligned, cache hitrate goes down, drops about 15% in flops
+float A[N][N] __attribute__((aligned(32)));
+float AT[N][N] __attribute__((aligned(32)));
+float B[N][N] __attribute__((aligned(32)));
+float BT[N][N] __attribute__((aligned(32)));
+float C[N][N] __attribute__((aligned(32)));
+float verify[N][N] __attribute__((aligned(32)));
 
 int main(){
     
@@ -70,30 +74,33 @@ int main(){
             }
         }
     }
-    __m256 a_vec;
-    __m256 b_vec;
-    for (int bx = 0; bx < N; bx += BLOCK_SIZE){
-        for (int by = 0; by < N; by += BLOCK_SIZE){
 
-            __m256 vec_arr[BLOCK_SIZE];
-            for(int i = 0; i < BLOCK_SIZE; i++){
-                vec_arr[i] = _mm256_setzero_ps();
-            }
+    for(int by = 0; by < N; by += BLOCK_Y){
+        for(int bx = 0; bx < N; bx += BLOCK_X){
 
-            for (int k = 0; k < N; k++){
-                b_vec = _mm256_loadu_ps(&B[k][by]);
-                for (int x = bx; x < bx + BLOCK_SIZE; x++){
-                    a_vec = _mm256_broadcast_ss(&AT[k][x]);
-                    vec_arr[x-bx] = _mm256_fmadd_ps(a_vec, b_vec, vec_arr[x-bx]);
+            __m256 tc[BLOCK_Y][BLOCK_X] = {};
+
+            for(int k = 0; k < N; k+= 8){
+                for(int y = 0; y < BLOCK_Y; y++){
+                    __m256 a_vec = _mm256_loadu_ps(&A[by+y][k]);
+                    for(int x = 0; x < BLOCK_X; x++){
+                        __m256 b_vec = _mm256_loadu_ps(&BT[bx+x][k]);
+                        tc[y][x] = _mm256_fmadd_ps(a_vec, b_vec, tc[y][x]);
+                    }
                 }
             }
 
-            for(int i = 0; i < BLOCK_SIZE; i++){
-                _mm256_storeu_ps(&C[bx+i][by], vec_arr[i]);
+            for(int y = 0; y < BLOCK_Y; y++){
+                for(int x = 0; x < BLOCK_X; x++){
+                    float tmp = 0.0;
+                    for(int i = 0; i < 8; i++)tmp += tc[y][x][i];
+                    C[by+y][bx+x] = tmp;
+                }
             }
 
         }
     }
+
 
     uint64_t end = nanos();
     double gflops = (double)flops / (double)((end - start) * 1e-9);
