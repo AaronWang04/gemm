@@ -1,6 +1,6 @@
 // clang -O3 -march=native -ffast-math gemm_tiled_simd.c && ./a.out
 // block y and x is needed to achieve good register hits, cannot just use one block size
-// 100 gflops
+// ~110 gflops
 
 #define _GNU_SOURCE
 
@@ -70,7 +70,7 @@ int main(){
         for (int j = 0; j < N; j++) {
             for (int l = 0; l < 8; l++) {
                 BT[i + l][j] = B[j][i + l];
-                AT[i + l][j] = A[j][i + l];
+                // AT[i + l][j] = A[j][i + l];
             }
         }
     }

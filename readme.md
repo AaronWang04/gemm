@@ -16,7 +16,8 @@ Benchmarks:
   - note that gemm_tiling and gemm_transpose already have some SIMD instructions on data moving from compiler optimization
   - around 34 flops
 - gemm_tiled_simd
-  - todo
+  - maxes out at around 110 gflops
+  - can improve upon cache coherency, but i'm happy with performance
 - openblas
   - 160 gflops on one thread on my cpu
   - 1000 gflops on multithreaded
