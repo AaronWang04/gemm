@@ -1,3 +1,5 @@
+Got access to H100s (hopper) and apple silicon so I'm working on gemm on those platforms!
+
 Investigation into optimizing matrix multiplication
 - ( https://github.com/OpenMathLib/OpenBLAS/tree/develop/kernel/x86_64 is really hard to read)
 
