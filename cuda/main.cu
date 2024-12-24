@@ -15,6 +15,13 @@
 #include <cublas_v2.h>
 
 
+void print_float(float* values) {
+    printf("float [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",
+           values[0], values[1], values[2], values[3],
+           values[4], values[5], values[6], values[7]);
+}
+
+
 void CudaDeviceInfo(){
 	int deviceId;
 
@@ -50,6 +57,7 @@ bool verify_matrix(float *ref, float *mat, int N){
 	for (int i = 0; i < N; i++){
 		diff = std::fabs(ref[i] - mat[i]);
 		if (diff > 1e-3){
+			std::cout << "failed at " << i << std::endl;
 			return false;
 		}
 	}
@@ -57,13 +65,13 @@ bool verify_matrix(float *ref, float *mat, int N){
 	return true;
 }
 
+
 void runCublasFP32(cublasHandle_t handle, int M, int N, int K, float alpha, float *A, float *B, float beta, float *C){
 
 	// https://docs.nvidia.com/cuda/archive/12.3.2/cublas/index.html
 	// CUBLAS_OP_N The non-transpose operation is selected.
 	// CUBLAS_OP_T The transpose operation is selected.
 	// CUBLAS_OP_C The conjugate transpose operation is selected.
-
 
 	// cublasStatus_t cublasGemmEx(cublasHandle_t handle,
     //                        cublasOperation_t transa,
@@ -92,9 +100,17 @@ void runCublasFP32(cublasHandle_t handle, int M, int N, int K, float alpha, floa
 
 }
 
+// #define M 8192
+// #define K 8192
+// #define N 8192
+
+#define M 16
+#define K 16
+#define N 16
+
 int main(int argc, char **argv){
 
-	CudaDeviceInfo();
+	// CudaDeviceInfo();
 
 	cublasHandle_t handle;
 	if (cublasCreate(&handle)){
@@ -102,6 +118,48 @@ int main(int argc, char **argv){
 		exit(EXIT_FAILURE);
 	}
 
+	float* A = nullptr;
+	float* AT = nullptr;
+	float* B = nullptr;
+	float* BT = nullptr;
+	float* C = nullptr;
+	float* C_ref = nullptr;
+
+	A = (float*) malloc(sizeof(float) * M * K);
+	AT = (float*) malloc(sizeof(float) * M * K);
+	B = (float*) malloc(sizeof(float) * K * N);
+	BT = (float*) malloc(sizeof(float) * K * N);
+	C = (float*) malloc(sizeof(float) * M * N);
+	C_ref = (float*) malloc(sizeof(float) * M * N);
+
+	std::ifstream f("/tmp/gemm", std::ios::binary);
+	if (!f.is_open()) {
+        std::cerr << "Error opening file!\n";
+        return -1;
+    }
+
+	// f.read expects a char* to read into
+	// using reinterpret_cast allows you to interpret A as char* but not change its type
+	f.read(reinterpret_cast<char*>(A), sizeof(float)*M*K);
+	f.read(reinterpret_cast<char*>(B), sizeof(float)*K*N);
+	f.read(reinterpret_cast<char*>(C_ref), sizeof(float)*M*N);
+	f.close();
+
+	runCublasFP32(handle, M, N, K, 1.0, A, B, 0.0, C);
+
+	if(verify_matrix(C, C_ref, M*N) == false){
+		std::cout << "verification failed\n";
+	}
+
+	print_float(A);
+	print_float(B);
+	print_float(C);
+	print_float(C_ref);
+
+	free(A);
+	free(B);
+	free(C);
+	free(C_ref);
 	cublasDestroy(handle);
 
 	return 0;
