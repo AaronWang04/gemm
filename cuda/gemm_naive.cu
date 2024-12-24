@@ -3,7 +3,7 @@
 #include <cstdio.h>
 #include <cstdlib.h>
 
-// matrix M*K x K*N = M*N
+// matrix M*K @ K*N = M*N
 
 // matmul is C = A@B
 // gemm is C = α*(A@B)+β*C, * for scalar multiplication
