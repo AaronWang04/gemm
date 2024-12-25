@@ -7,7 +7,7 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy as np
 import time
 
-N = 16
+N = 2048
 if __name__ == "__main__":
     FLOP = 2*N*N*N
     A = np.random.randn(N, N).astype(np.float32)
@@ -25,7 +25,10 @@ if __name__ == "__main__":
     # np.savetxt('matrix.csv', B, delimiter=',', fmt='%.2f')
 
     # # store A, B and result for verification
-    with open("/tmp/gemm", "wb") as f:
-        f.write(A.data)
-        f.write(B.data)
-        f.write(C.data)
+    try:
+        with open("/tmp/gemm", "wb") as f:
+            f.write(A.data)
+            f.write(B.data)
+            f.write(C.data)
+    except:
+        print("did not save properly")

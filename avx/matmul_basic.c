@@ -1,4 +1,4 @@
-// clang -O3 gemm_basic.c && ./a.out
+// clang -O3 avx/matmul_basic.c && ./a.out
 // ~1 GFLOP/s
 #include <stdio.h>
 #include <math.h>

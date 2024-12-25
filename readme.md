@@ -1,23 +1,24 @@
+
 Got access to H100s (hopper) and apple silicon so I'm working on gemm on those platforms!
 
 Investigation into optimizing matrix multiplication
 - ( https://github.com/OpenMathLib/OpenBLAS/tree/develop/kernel/x86_64 is really hard to read)
 
 Benchmarks:
-- gemm_basic : basic implementation in c
+- matmul_basic : basic implementation in c
   - around 1 gflops
-- gemm_transpose : transpose matrix B
+- matmul_transpose : transpose matrix B
   - reduce cache misses by traversing B through row-majored fashion
   - around 6 gflops
-- gemm_tiling
+- matmul_tiling
   - reduce cache misses even further through blocked tiling
   - maxes out at around 36 gflops, good block sizes matter a lot here
   - the moment you start using ram the gflops plummet, you want everything to fit on registers
-- gemm_simd
+-  matmul_simd
   - uses avx SIMD instructions to parallize the computation
   - note that gemm_tiling and gemm_transpose already have some SIMD instructions on data moving from compiler optimization
   - around 34 flops
-- gemm_tiled_simd
+-  matmul_tiled_simd
   - maxes out at around 110 gflops
   - can improve upon cache coherency, but i'm happy with performance
 - openblas

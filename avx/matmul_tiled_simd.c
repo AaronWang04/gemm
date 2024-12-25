@@ -1,4 +1,4 @@
-// clang -O3 -march=native -ffast-math gemm_tiled_simd.c && ./a.out
+// clang -O3 -march=native -ffast-math avx/matmul_tiled_simd.c && ./a.out
 // block y and x is needed to achieve good register hits, cannot just use one block size
 // ~110 gflops
 

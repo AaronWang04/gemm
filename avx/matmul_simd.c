@@ -1,4 +1,4 @@
-// clang -O3 -march=native gemm_simd.c && ./a.out
+// clang -O3 -march=native avx/matmul_simd.c && ./a.out
 // gcc -std=c11 -march=native -mavx2 -mfma matmul_simd.c && ./a.out
 // around 34 flops, a lot better than 6 flops without SIMD, but far from openblas's 160 flops
 // you can't use SIMD without transpose unless you do some weird indexing when loading
@@ -13,7 +13,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 102
+#define N 1024
 
 uint64_t nanos(){
     struct timespec t;

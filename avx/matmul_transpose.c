@@ -1,4 +1,4 @@
-// clang -O3 gemm_transpose.c && ./a.out
+// clang -O3 avx/matmul_transpose.c && ./a.out
 // ~6 GFLOP/s
 #include <stdio.h>
 #include <math.h>
