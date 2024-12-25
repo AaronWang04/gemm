@@ -96,13 +96,13 @@ void runCublasFP32(cublasHandle_t handle, int M, int N, int K, float alpha, floa
 
 }
 
-// #define M 8192
-// #define K 8192
-// #define N 8192
+#define M 8192
+#define K 8192
+#define N 8192
 
-#define M 16
-#define K 16
-#define N 16
+// #define M 16
+// #define K 16
+// #define N 16
 
 int main(int argc, char **argv){
 

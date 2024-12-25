@@ -7,13 +7,13 @@ os.environ['OPENBLAS_NUM_THREADS'] = '1'
 import numpy as np
 import time
 
-N = 2048
+N = 8192
 if __name__ == "__main__":
     FLOP = 2*N*N*N
     A = np.random.randn(N, N).astype(np.float32)
     B = np.random.randn(N, N).astype(np.float32)
 
-    for _ in range(2):
+    for _ in range(1):
         start = time.monotonic()
         C = A @ B
         end = time.monotonic()
