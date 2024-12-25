@@ -13,7 +13,7 @@
 #include <time.h>
 #include <assert.h>
 
-#define N 1024
+#define N 102
 
 uint64_t nanos(){
     struct timespec t;
