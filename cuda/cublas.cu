@@ -1,8 +1,4 @@
-// nvcc -lcublas main.cu && ./a.out
-
-// c++ it's better to include this instead of ex. stdio.h
-// stdio.h gives printf, cstdio gives std::printf, avoid conflicts with other global identifiers
-// prob not an issue in scripts like ours
+// nvcc -lcublas cublas.cu && ./a.out
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -110,27 +106,31 @@ void runCublasFP32(cublasHandle_t handle, int M, int N, int K, float alpha, floa
 
 int main(int argc, char **argv){
 
-	// CudaDeviceInfo();
-
 	cublasHandle_t handle;
 	if (cublasCreate(&handle)){
 		std::cerr << "Create cublas handle error" << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
+	// host pointers
 	float* A = nullptr;
-	float* AT = nullptr;
 	float* B = nullptr;
-	float* BT = nullptr;
 	float* C = nullptr;
 	float* C_ref = nullptr;
 
+	// device pointers
+	float* dA = nullptr;
+	float* dB = nullptr;
+	float* dC = nullptr;
+
 	A = (float*) malloc(sizeof(float) * M * K);
-	AT = (float*) malloc(sizeof(float) * M * K);
 	B = (float*) malloc(sizeof(float) * K * N);
-	BT = (float*) malloc(sizeof(float) * K * N);
-	C = (float*) malloc(sizeof(float) * M * N);
+	C = (float*) calloc(M * N, sizeof(float));
 	C_ref = (float*) malloc(sizeof(float) * M * N);
+
+	cudaMalloc((void**) &dA, sizeof(float)*M*K);
+	cudaMalloc((void**) &dB, sizeof(float)*K*N);
+	cudaMalloc((void**) &dC, sizeof(float)*M*N);
 
 	std::ifstream f("/tmp/gemm", std::ios::binary);
 	if (!f.is_open()) {
@@ -145,7 +145,14 @@ int main(int argc, char **argv){
 	f.read(reinterpret_cast<char*>(C_ref), sizeof(float)*M*N);
 	f.close();
 
-	runCublasFP32(handle, M, N, K, 1.0, A, B, 0.0, C);
+	// move from host to device
+	cudaMemcpy(dA, A, sizeof(float)*M*K, cudaMemcpyHostToDevice);
+	cudaMemcpy(dB, B, sizeof(float)*K*N, cudaMemcpyHostToDevice);
+	cudaMemcpy(dC, C, sizeof(float)*M*N, cudaMemcpyHostToDevice);
+
+	runCublasFP32(handle, M, N, K, 1.0f, dA, dB, 0.0f, dC);
+	cudaDeviceSynchronize();
+	cudaMemcpy(C, dC, sizeof(float)*M*N, cudaMemcpyDeviceToHost);
 
 	if(verify_matrix(C, C_ref, M*N) == false){
 		std::cout << "verification failed\n";
