@@ -31,6 +31,7 @@ Notes
   - ```valgrind --tool=cachegrind ./a.out```
 
 System information:
+avx
 ```
             .-/+oossssoo+/-.               aaron@ubuntu
         `:+ssssssssssssssssss+:`           ---------------------- 
@@ -52,4 +53,28 @@ ossyNMMMNyMMhsssssssssssssshmmmhssssssso   CPU: 13th Gen Intel i9-13900K (32) @ 
       -+sssssssssssssssssyyyssss+-
         `:+ssssssssssssssssss+:`
             .-/+oossssoo+/-.
+```
+
+cuda machine
+```
+            .-/+oossssoo+/-.               root@pod-as-vm 
+        `:+ssssssssssssssssss+:`           -------------- 
+      -+ssssssssssssssssssyyssss+-         OS: Ubuntu 22.04.4 LTS x86_64 
+    .ossssssssssssssssssdMMMNysssso.       Host: PowerEdge XE9680 
+   /ssssssssssshdmmNNmmyNMMMMhssssss/      Kernel: 5.15.0-124-generic 
+  +ssssssssshmydMMMMMMMNddddyssssssss+     Uptime: 50 days, 1 hour, 46 mins 
+ /sssssssshNMMMyhhyyyyhmNMMMNhssssssss/    Packages: 504 (dpkg) 
+.ssssssssdMMMNhsssssssssshNMMMdssssssss.   Shell: bash 5.1.16 
++sssshhhyNMMNyssssssssssssyNMMMysssssss+   Resolution: 1024x768 
+ossyNMMMNyMMhsssssssssssssshmmmhssssssso   Terminal: vscode 
+ossyNMMMNyMMhsssssssssssssshmmmhssssssso   CPU: Intel Xeon Platinum 8470 (208) @ 2.972GHz 
++sssshhhyNMMNyssssssssssssyNMMMysssssss+   GPU: NVIDIA H100 SXM5 80GB 
+.ssssssssdMMMNhsssssssssshNMMMdssssssss.   GPU: NVIDIA H100 SXM5 80GB 
+ /sssssssshNMMMyhhyyyyhdNMMMNhssssssss/    GPU: NVIDIA H100 SXM5 80GB 
+  +sssssssssdmydMMMMMMMMddddyssssssss+     GPU: NVIDIA H100 SXM5 80GB 
+   /ssssssssssshdmNNNNmyNMMMMhssssss/      GPU: NVIDIA H100 SXM5 80GB 
+    .ossssssssssssssssssdMMMNysssso.       GPU: NVIDIA H100 SXM5 80GB 
+      -+sssssssssssssssssyyyssss+-         GPU: NVIDIA H100 SXM5 80GB 
+        `:+ssssssssssssssssss+:`           GPU: NVIDIA H100 SXM5 80GB 
+            .-/+oossssoo+/-.               Memory: 40598MiB / 1031524MiB 
 ```
