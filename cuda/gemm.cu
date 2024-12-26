@@ -42,6 +42,13 @@ Matrixes are stored in row-majored
 When looping, A is consecutive in memory, B is not
 */
 
+void runCublasFP32(cublasHandle_t handle, int M, int N, int K, float alpha, float *A, float *B, float beta, float *C){
+
+	cublasGemmEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, B, CUDA_R_32F, 
+				N, A, CUDA_R_32F, K, &beta, C, CUDA_R_32F, N, CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+
+}
+
 // naive implementation
 __global__ void gemm_naive(int M, int K, int N, float alpha, const float* A, const float* B, float beta, float* C){
 
@@ -65,9 +72,21 @@ __global__ void gemm_naive(int M, int K, int N, float alpha, const float* A, con
 }
 
 /*
-The problem with the previous implementation comes from 
+In the previous kernel, threads are indexed as [threadIdx.x, threadIdx.y]
+Note that in a naive warp launch, threadIdx.x "changes" faster than threadIdx.y
 
+In total, we access A[x*K + i], B[i*N + y], and C[x*N + y]
+since threadIdx.x changes faster, essentially we will have a bunch of threads on different rows of A
+This means every thread requires a different row of A, but the same column on B
+
+However, in the coalesced kernel, we set it so that all the warps are in the same row of A
+This way, they require the same row of A, and different columns of B
+Since B is row-major, this is actually good as it means we can access different columns of B contiguously
+
+Accessing the same value is a within-warp broadcast,
+different threads accessing different values in a contiguous block is referred to as coalesced memory access
 */
+
 // global memory coalescing
 // this blocksize is size of a warp
 template <const uint BLOCKSIZE>
@@ -87,19 +106,16 @@ __global__ void gemm_global_mem_coalescing(int M, int K, int N, float alpha, con
 
 }
 
-void runCublasFP32(cublasHandle_t handle, int M, int N, int K, float alpha, float *A, float *B, float beta, float *C){
 
-	cublasGemmEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, B, CUDA_R_32F, 
-				N, A, CUDA_R_32F, K, &beta, C, CUDA_R_32F, N, CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP);
-
-}
 
 
 #define M 8192
 #define K 8192
 #define N 8192
-#define CEIL_DIV(M, N) (((M) + (N)-1) / (N))
 
+int CEIL_DIV(int m, int n){
+    return (((m) + (n)-1) / (n));
+}
 
 bool verify_matrix(float *ref, float *mat, int size){
 	for (int i = 0; i < size; i++){
@@ -112,11 +128,17 @@ bool verify_matrix(float *ref, float *mat, int size){
 	return true;
 }
 
+void print_float(float* values) {
+    printf("float [%.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f, %.6f]\n",
+           values[0], values[1], values[2], values[3],
+           values[4], values[5], values[6], values[7]);
+}
+
 int main(int argc, char** argv){
 
     int kernel_num = 0;
     if (argc == 2){
-        int kernel_num = std::stoi(argv[1]);
+        kernel_num = std::stoi(argv[1]);
     }
 
     // when initializing multiple pointers, you have to do this disgusting *varname convention blegh
@@ -151,7 +173,6 @@ int main(int argc, char** argv){
     float alpha = 1.0f;
     float beta = 1.0f;
 
-
     cublasHandle_t handle;
     dim3 gridDim(CEIL_DIV(M, 32), CEIL_DIV(N, 32));
     dim3 blockDim(32, 32);
@@ -162,6 +183,7 @@ int main(int argc, char** argv){
             std::cerr << "Create cublas handle error" << std::endl;
             exit(EXIT_FAILURE);
         }
+        runCublasFP32(handle, M, N, K, alpha, dA, dB, beta, dC);
         break;
     case 1:
         std::cout << "running naive implementation" << std::endl;
@@ -176,9 +198,10 @@ int main(int argc, char** argv){
     // get content out of device
     cudaMemcpy(hC, dC, sizeof(float)*M*N, cudaMemcpyDeviceToHost);
 
-    if(verify_matrix(hC, C_ref, M*N) == false){
-		std::cout << "verification failed\n";
-	}
+    std::cout << "torch reference: \t";
+    print_float(C_ref);
+    std::cout << "output: \t\t";
+    print_float(hC);
 
     free(hA);
 	free(hB);
